@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Sistema de Licenças</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/admin-panel.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>">
+</head>
+<body>
+    <div id="admin-app">
+        <!-- Tela de Login -->
+        <div id="login-screen" class="admin-panel">
+            <div class="login-form">
+                <h2>🔐 Acesso Administrativo</h2>
+                <input type="password" id="admin-password" class="password-input" placeholder="Digite a senha de administrador" />
+                <button onclick="adminLogin()" class="login-btn">Entrar</button>
+                <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+                    <p><strong>Senha padrão:</strong> admin123</p>
+                    <p><em>Altere esta senha em produção!</em></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Principal -->
+        <div id="admin-panel" class="admin-panel" style="display: none;">
+            <div class="admin-header">
+                <h1>🔑 Painel de Licenças</h1>
+                <p>Sistema de Gerenciamento de Chaves de Acesso</p>
+                <button onclick="adminLogout()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">
+                    🚪 Sair
+                </button>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="showTab('generate')">🔑 Gerar Licenças</button>
+                <button class="admin-tab" onclick="showTab('manage')">📋 Gerenciar</button>
+                <button class="admin-tab" onclick="showTab('reports')">📊 Relatórios</button>
+                <button class="admin-tab" onclick="showTab('settings')">⚙️ Configurações</button>
+            </div>
+
+            <div id="admin-content">
+                <!-- Conteúdo será carregado dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/license-generator.js"></script>
+    <script>
+        // Sistema de Login Administrativo
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            
+            // Senhas aceitas (em produção, use hash e validação no servidor)
+            const validPasswords = ['admin123', 'posto2024', 'licencas@123'];
+            
+            if (validPasswords.includes(password)) {
+                localStorage.setItem('admin_logged_in', 'true');
+                localStorage.setItem('admin_login_time', Date.now());
+                
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                
+                // Inicializar sistema de licenças
+                if (!window.licenseGenerator) {
+                    window.licenseGenerator = new LicenseGenerator();
+                }
+                
+                showTab('generate');
+                showNotification('Login realizado com sucesso!', 'success');
+            } else {
+                showNotification('Senha incorreta!', 'error');
+                document.getElementById('admin-password').value = '';
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('admin_logged_in');
+            localStorage.removeItem('admin_login_time');
+            
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'none';
+            
+            showNotification('Logout realizado com sucesso!', 'success');
+        }
+
+        // Verificar se já está logado
+        function checkAdminLogin() {
+            const isLoggedIn = localStorage.getItem('admin_logged_in');
+            const loginTime = localStorage.getItem('admin_login_time');
+            
+            // Sessão expira em 8 horas
+            const sessionDuration = 8 * 60 * 60 * 1000;
+            
+            if (isLoggedIn && loginTime && (Date.now() - parseInt(loginTime)) < sessionDuration) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                
+                // Inicializar sistema de licenças
+                if (!window.licenseGenerator) {
+                    window.licenseGenerator = new LicenseGenerator();
+                }
+                
+                showTab('generate');
+            } else {
+                adminLogout();
+            }
+        }
+
+        // Sistema de Abas
+        function showTab(tabName) {
+            // Atualizar abas ativas
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Mostrar conteúdo da aba
+            const content = document.getElementById('admin-content');
+            
+            switch(tabName) {
+                case 'generate':
+                    content.innerHTML = renderGenerateTab();
+                    break;
+                case 'manage':
+                    content.innerHTML = renderManageTab();
+                    break;
+                case 'reports':
+                    content.innerHTML = renderReportsTab();
+                    break;
+                case 'settings':
+                    content.innerHTML = renderSettingsTab();
+                    break;
+            }
+        }
+
+        // Renderizar Aba de Geração
+        function renderGenerateTab() {
+            return `
+                <div class="admin-section">
+                    <h3>🔑 Gerar Novas Licenças</h3>
+                    
+                    <div class="generate-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Plano:</label>
+                                <select class="form-select" id="planType">
+                                    <option value="trial">🆓 Teste (7 dias)</option>
+                                    <option value="basic">📦 Básico (R$ 29/mês)</option>
+                                    <option value="premium">⭐ Premium (R$ 59/mês)</option>
+                                    <option value="enterprise">🏢 Empresarial (R$ 99/mês)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Quantidade:</label>
+                                <input type="number" class="form-input" id="quantity" value="1" min="1" max="100">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Validade (dias):</label>
+                                <input type="number" class="form-input" id="expiryDays" value="365" min="1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Email do Cliente:</label>
+                                <input type="email" class="form-input" id="customerId" placeholder="cliente@email.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Observações:</label>
+                                <input type="text" class="form-input" id="notes" placeholder="Notas sobre a licença">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="generateSingleLicense()">
+                                🔑 Gerar Licença
+                            </button>
+                            <button class="btn" onclick="generateBulkLicenses()">
+                                📦 Gerar em Lote
+                            </button>
+                            <button class="btn" onclick="generateTrialLicense()">
+                                🆓 Gerar Teste Rápido
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="generated-results" class="generated-section" style="display: none;">
+                        <h4>✅ Licenças Geradas</h4>
+                        <div id="license-results"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar Aba de Gerenciamento
+        function renderManageTab() {
+            if (!window.licenseGenerator) return '<p>Sistema não inicializado</p>';
+            
+            const licenses = Array.from(window.licenseGenerator.licenseDatabase.values());
+            
+            return `
+                <div class="admin-section">
+                    <h3>📋 Gerenciar Licenças</h3>
+                    
+                    <div class="manage-actions">
+                        <button class="btn" onclick="exportLicenses()">
+                            📊 Exportar CSV
+                        </button>
+                        <button class="btn" onclick="refreshLicenses()">
+                            🔄 Atualizar Lista
+                        </button>
+                        <button class="btn" onclick="importLicenses()">
+                            📥 Importar Licenças
+                        </button>
+                    </div>
+                    
+                    <div class="license-stats">
+                        <div class="stat-card">
+                            <h4>Total</h4>
+                            <div class="stat-number">${licenses.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Ativas</h4>
+                            <div class="stat-number">${licenses.filter(l => l.status === 'active' && new Date() <= new Date(l.expiresAt)).length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Expiradas</h4>
+                            <div class="stat-number">${licenses.filter(l => new Date() > new Date(l.expiresAt)).length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Revogadas</h4>
+                            <div class="stat-number">${licenses.filter(l => l.status === 'revoked').length}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="license-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Chave</th>
+                                    <th>Plano</th>
+                                    <th>Cliente</th>
+                                    <th>Status</th>
+                                    <th>Expira em</th>
+                                    <th>Ativações</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${licenses.map(license => renderLicenseRow(license)).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar linha da licença
+        function renderLicenseRow(license) {
+            const isExpired = new Date() > new Date(license.expiresAt);
+            const statusClass = license.status === 'active' ? (isExpired ? 'expired' : 'active') : 'revoked';
+            
+            return `
+                <tr class="license-row ${statusClass}">
+                    <td>
+                        <code class="license-key" onclick="copyToClipboard('${license.key}')">${license.key}</code>
+                    </td>
+                    <td>
+                        <span class="plan-badge plan-${license.planType}">${license.planType.toUpperCase()}</span>
+                    </td>
+                    <td>${license.customerId}</td>
+                    <td>
+                        <span class="status-badge status-${statusClass}">
+                            ${isExpired ? 'EXPIRADA' : license.status.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>${new Date(license.expiresAt).toLocaleDateString('pt-BR')}</td>
+                    <td>${license.activations}/${license.maxActivations}</td>
+                    <td class="license-actions">
+                        <button class="btn-sm" onclick="extendLicense('${license.key}')" title="Estender">📅</button>
+                        <button class="btn-sm btn-danger" onclick="revokeLicense('${license.key}')" title="Revogar">🚫</button>
+                        <button class="btn-sm" onclick="viewLicenseDetails('${license.key}')" title="Detalhes">👁️</button>
+                        <button class="btn-sm" onclick="copyToClipboard('${license.key}')" title="Copiar">📋</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Renderizar Aba de Relatórios
+        function renderReportsTab() {
+            if (!window.licenseGenerator) return '<p>Sistema não inicializado</p>';
+            
+            const licenses = Array.from(window.licenseGenerator.licenseDatabase.values());
+            const planStats = calculatePlanStats(licenses);
+            
+            return `
+                <div class="admin-section">
+                    <h3>📊 Relatórios e Estatísticas</h3>
+                    
+                    <div class="reports-grid">
+                        <div class="report-card">
+                            <h4>📈 Licenças por Plano</h4>
+                            <div class="plan-stats">
+                                ${Object.entries(planStats).map(([plan, count]) => `
+                                    <div class="plan-stat">
+                                        <span class="plan-name">${plan.toUpperCase()}</span>
+                                        <span class="plan-count">${count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="report-card">
+                            <h4>⏰ Expirações Próximas (30 dias)</h4>
+                            <div class="expiring-licenses">
+                                ${getExpiringLicenses().map(license => `
+                                    <div class="expiring-item">
+                                        <code onclick="copyToClipboard('${license.key}')">${license.key}</code>
+                                        <span>${new Date(license.expiresAt).toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="report-card">
+                            <h4>🔥 Ativações Recentes</h4>
+                            <div class="recent-activations">
+                                ${getRecentActivations().map(license => `
+                                    <div class="activation-item">
+                                        <code onclick="copyToClipboard('${license.key}')">${license.key}</code>
+                                        <span>${license.lastValidation ? new Date(license.lastValidation).toLocaleDateString('pt-BR') : 'Nunca'}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="report-card">
+                            <h4>💰 Receita Estimada</h4>
+                            <div class="revenue-stats">
+                                <div class="plan-stat">
+                                    <span>Mensal</span>
+                                    <span class="plan-count">R$ ${calculateMonthlyRevenue(licenses)}</span>
+                                </div>
+                                <div class="plan-stat">
+                                    <span>Anual</span>
+                                    <span class="plan-count">R$ ${calculateAnnualRevenue(licenses)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar Aba de Configurações
+        function renderSettingsTab() {
+            return `
+                <div class="admin-section">
+                    <h3>⚙️ Configurações do Sistema</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Senha de Administrador:</label>
+                            <input type="password" class="form-input" id="newAdminPassword" placeholder="Nova senha">
+                            <button class="btn" onclick="changeAdminPassword()" style="margin-top: 10px;">
+                                🔒 Alterar Senha
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Backup do Sistema:</label>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="btn" onclick="backupLicenses()">
+                                    💾 Fazer Backup
+                                </button>
+                                <button class="btn" onclick="restoreLicenses()">
+                                    📥 Restaurar Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Limpeza do Sistema:</label>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button class="btn btn-danger" onclick="cleanExpiredLicenses()">
+                                    🗑️ Limpar Expiradas
+                                </button>
+                                <button class="btn btn-danger" onclick="resetAllLicenses()">
+                                    ⚠️ Reset Total
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Informações do Sistema:</label>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px;">
+                                <p><strong>Versão:</strong> 1.0.0</p>
+                                <p><strong>Licenças Cadastradas:</strong> ${window.licenseGenerator ? window.licenseGenerator.licenseDatabase.size : 0}</p>
+                                <p><strong>Último Backup:</strong> ${localStorage.getItem('last_backup') || 'Nunca'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Funções Auxiliares
+        function generateSingleLicense() {
+            if (!window.licenseGenerator) return;
+            
+            const planType = document.getElementById('planType').value;
+            const customerId = document.getElementById('customerId').value || null;
+            const expiryDays = parseInt(document.getElementById('expiryDays').value);
+            const notes = document.getElementById('notes').value;
+
+            const license = window.licenseGenerator.generateLicenseKey(planType, customerId, expiryDays);
+            
+            if (notes) {
+                license.metadata.notes = notes;
+                window.licenseGenerator.licenseDatabase.set(license.key, license);
+                window.licenseGenerator.saveLicenseDatabase();
+            }
+
+            showGeneratedLicense([license]);
+        }
+
+        function generateBulkLicenses() {
+            if (!window.licenseGenerator) return;
+            
+            const planType = document.getElementById('planType').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const expiryDays = parseInt(document.getElementById('expiryDays').value);
+
+            const licenses = window.licenseGenerator.generateBulkLicenses(planType, quantity, expiryDays);
+            showGeneratedLicense(licenses);
+        }
+
+        function generateTrialLicense() {
+            if (!window.licenseGenerator) return;
+            
+            const license = window.licenseGenerator.generateLicenseKey('trial', 'teste@cliente.com', 7);
+            showGeneratedLicense([license]);
+        }
+
+        function showGeneratedLicense(licenses) {
+            const resultsDiv = document.getElementById('license-results');
+            const generatedSection = document.getElementById('generated-results');
+            
+            resultsDiv.innerHTML = licenses.map(license => `
+                <div class="generated-license">
+                    <div class="license-info">
+                        <h5>🔑 Licença Gerada</h5>
+                        <div class="license-details">
+                            <div class="detail-row">
+                                <span>Chave:</span>
+                                <code class="license-key" onclick="copyToClipboard('${license.key}')">${license.key}</code>
+                            </div>
+                            <div class="detail-row">
+                                <span>Plano:</span>
+                                <span class="plan-badge plan-${license.planType}">${license.planType.toUpperCase()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>Cliente:</span>
+                                <span>${license.customerId}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>Expira em:</span>
+                                <span>${new Date(license.expiresAt).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="license-actions">
+                        <button class="btn btn-sm" onclick="copyToClipboard('${license.key}')">
+                            📋 Copiar
+                        </button>
+                        <button class="btn btn-sm" onclick="sendLicenseByEmail('${license.key}')">
+                            📧 Enviar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            generatedSection.style.display = 'block';
+        }
+
+        // Funções de Utilidade
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Chave copiada!', 'success');
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 10px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                background: ${type === 'success' ? '#00b894' : type === 'error' ? '#e17055' : '#74b9ff'};
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function calculatePlanStats(licenses) {
+            const stats = {};
+            licenses.forEach(license => {
+                stats[license.planType] = (stats[license.planType] || 0) + 1;
+            });
+            return stats;
+        }
+
+        function getExpiringLicenses() {
+            if (!window.licenseGenerator) return [];
+            
+            const thirtyDaysFromNow = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+            return Array.from(window.licenseGenerator.licenseDatabase.values())
+                .filter(license => {
+                    const expiry = new Date(license.expiresAt);
+                    return expiry <= thirtyDaysFromNow && expiry > new Date() && license.status === 'active';
+                })
+                .sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt))
+                .slice(0, 5);
+        }
+
+        function getRecentActivations() {
+            if (!window.licenseGenerator) return [];
+            
+            return Array.from(window.licenseGenerator.licenseDatabase.values())
+                .filter(license => license.lastValidation)
+                .sort((a, b) => new Date(b.lastValidation) - new Date(a.lastValidation))
+                .slice(0, 5);
+        }
+
+        function calculateMonthlyRevenue(licenses) {
+            const prices = { trial: 0, basic: 29, premium: 59, enterprise: 99 };
+            return licenses
+                .filter(l => l.status === 'active' && new Date() <= new Date(l.expiresAt))
+                .reduce((total, license) => total + (prices[license.planType] || 0), 0);
+        }
+
+        function calculateAnnualRevenue(licenses) {
+            return calculateMonthlyRevenue(licenses) * 12;
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminLogin();
+            
+            // Permitir login com Enter
+            document.getElementById('admin-password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    adminLogin();
+                }
+            });
+        });
+
+        // Adicionar estilos para animação
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

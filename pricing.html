@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos e Preços - Sistema Posto de Gasolina</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pricing-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .pricing-hero h1 {
+            font-size: 3rem;
+            margin: 0 0 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pricing-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .pricing-container {
+            max-width: 1200px;
+            margin: -50px auto 0;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .pricing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pricing-card.featured {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .pricing-card.featured::before {
+            content: "MAIS POPULAR";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .plan-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .plan-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #667eea;
+            margin: 0 0 5px 0;
+        }
+        
+        .plan-price .currency {
+            font-size: 1.5rem;
+            vertical-align: top;
+        }
+        
+        .plan-period {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 40px 0;
+            text-align: left;
+        }
+        
+        .plan-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .plan-features li::before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            top: 10px;
+        }
+        
+        .plan-features li.unavailable {
+            color: #ccc;
+        }
+        
+        .plan-features li.unavailable::before {
+            content: "❌";
+        }
+        
+        .plan-button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .plan-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .plan-button.secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+        
+        .plan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .features-section {
+            background: #f8f9fa;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .faq-section {
+            padding: 80px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            background: white;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            padding: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-answer.active {
+            padding: 20px;
+            max-height: 200px;
+        }
+        
+        .demo-section {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 60px 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .demo-keys {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 30px auto;
+        }
+        
+        .demo-key {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-key code {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .demo-key code:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="pricing-hero">
+        <h1>💰 Planos e Preços</h1>
+        <p>Escolha o plano ideal para o seu posto de gasolina. Comece grátis e evolua conforme sua necessidade.</p>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="pricing-container">
+        <div class="pricing-grid">
+            <!-- Plano Gratuito -->
+            <div class="pricing-card">
+                <div class="plan-icon">🆓</div>
+                <h3 class="plan-name">Gratuito</h3>
+                <div class="plan-price">
+                    <span class="currency">R$</span>0
+                </div>
+                <div class="plan-period">Para sempre</div>
+                <ul class="plan-features">
+                    <li>1 funcionário</li>
+                    <li>30 dias de histórico</li>
+                    <li>Fechamento básico</li>
+                    <li>Suporte por email</li>
+                    <li class="unavailable">Backup em nuvem</li>
+                    <li class="unavailable">Relatórios avançados</li>
+                    <li class="unavailable">Multi-lojas</li>
+                </ul>
+                <button class="plan-button secondary" onclick="startFreeTrial()">
+                    Começar Grátis
+                </button>
+            </div>
+
+            <!-- Plano Básico -->
+            <div class="pricing-card">
+                <div class="plan-icon">📦</div>
+                <h3 class="plan-name">Básico</h3>
+                <div class="plan-price">
+                    <span class="currency">R$</span>29
+                </div>
+                <div class="plan-period">por mês</div>
+                <ul class="plan-features">
+                    <li>5 funcionários</li>
+                    <li>90 dias de histórico</li>
+                    <li>Fechamento completo</li>
+                    <li>Backup automático</li>
+                    <li>Suporte prioritário</li>
+                    <li class="unavailable">Relatórios avançados</li>
+                    <li class="unavailable">Multi-lojas</li>
+                </ul>
+                <button class="plan-button primary" onclick="selectPlan('basic')">
+                    Escolher Básico
+                </button>
+            </div>
+
+            <!-- Plano Premium -->
+            <div class="pricing-card featured">
+                <div class="plan-icon">⭐</div>
+                <h3 class="plan-name">Premium</h3>
+                <div class="plan-price">
+                    <span class="currency">R$</span>59
+                </div>
+                <div class="plan-period">por mês</div>
+                <ul class="plan-features">
+                    <li>Funcionários ilimitados</li>
+                    <li>Histórico ilimitado</li>
+                    <li>Backup em nuvem</li>
+                    <li>Relatórios avançados</li>
+                    <li>Suporte 24/7</li>
+                    <li>Integração ERP</li>
+                    <li class="unavailable">Multi-lojas</li>
+                </ul>
+                <button class="plan-button primary" onclick="selectPlan('premium')">
+                    Escolher Premium
+                </button>
+            </div>
+
+            <!-- Plano Empresarial -->
+            <div class="pricing-card">
+                <div class="plan-icon">🏢</div>
+                <h3 class="plan-name">Empresarial</h3>
+                <div class="plan-price">
+                    <span class="currency">R$</span>99
+                </div>
+                <div class="plan-period">por mês</div>
+                <ul class="plan-features">
+                    <li>Tudo do Premium</li>
+                    <li>Multi-lojas ilimitadas</li>
+                    <li>API personalizada</li>
+                    <li>Treinamento incluído</li>
+                    <li>Gerente dedicado</li>
+                    <li>Customizações</li>
+                    <li>SLA garantido</li>
+                </ul>
+                <button class="plan-button primary" onclick="selectPlan('enterprise')">
+                    Escolher Empresarial
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Section -->
+    <div class="demo-section">
+        <h2>🎮 Teste Grátis Agora!</h2>
+        <p>Use estas chaves de demonstração para testar todas as funcionalidades:</p>
+        
+        <div class="demo-keys">
+            <div class="demo-key">
+                <h4>🆓 Teste Gratuito</h4>
+                <code onclick="copyKey(this)">TRIL-2024-TEST-DEMO</code>
+                <small>7 dias grátis</small>
+            </div>
+            
+            <div class="demo-key">
+                <h4>📦 Básico Demo</h4>
+                <code onclick="copyKey(this)">BASI-2024-DEMO-KEY1</code>
+                <small>30 dias de teste</small>
+            </div>
+            
+            <div class="demo-key">
+                <h4>⭐ Premium Demo</h4>
+                <code onclick="copyKey(this)">PREM-2024-FULL-DEMO</code>
+                <small>Recursos completos</small>
+            </div>
+            
+            <div class="demo-key">
+                <h4>🏢 Empresarial Demo</h4>
+                <code onclick="copyKey(this)">ENTP-2024-CORP-TEST</code>
+                <small>Todas as funcionalidades</small>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="index.html" class="plan-button primary" style="display: inline-block; margin-right: 15px;">
+                🚀 Testar Sistema
+            </a>
+            <a href="admin.html" class="plan-button secondary" style="display: inline-block;">
+                ⚙️ Painel Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features-section">
+        <h2>🚀 Recursos Inclusos</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h4>Fechamento Completo</h4>
+                <p>Controle total de dinheiro, cartões, PIX e vouchers por turno</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h4>Multi-Usuários</h4>
+                <p>Cadastre funcionários com diferentes níveis de acesso</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h4>Relatórios</h4>
+                <p>Análises detalhadas de vendas e performance</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h4>Backup Automático</h4>
+                <p>Seus dados sempre seguros na nuvem</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h4>Mobile Ready</h4>
+                <p>Funciona perfeitamente em tablets e celulares</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h4>Segurança</h4>
+                <p>Criptografia e controle de acesso avançado</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+        <h2 style="text-align: center; margin-bottom: 40px;">❓ Perguntas Frequentes</h2>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                Como funciona o período de teste?
+                <span>+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Você tem 7 dias para testar todas as funcionalidades gratuitamente. Não é necessário cartão de crédito para começar.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                Posso cancelar a qualquer momento?
+                <span>+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Sim! Não há fidelidade. Você pode cancelar sua assinatura a qualquer momento pelo painel administrativo.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                Os dados ficam salvos na nuvem?
+                <span>+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Nos planos pagos, sim. Fazemos backup automático diário. No plano gratuito, os dados ficam apenas no seu dispositivo.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                Funciona offline?
+                <span>+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Sim! O sistema funciona completamente offline. Os dados são sincronizados quando a internet voltar.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                Tem suporte técnico?
+                <span>+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Sim! Oferecemos suporte por email, WhatsApp e telefone dependendo do seu plano.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectPlan(planType) {
+            // Simular seleção de plano
+            alert(`Plano ${planType.toUpperCase()} selecionado!\n\nVocê será redirecionado para o pagamento.\n\n💡 Esta é uma demonstração. Em produção, integraria com sistema de pagamento real.`);
+            
+            // Em produção, redirecionaria para checkout
+            console.log(`Plano selecionado: ${planType}`);
+        }
+        
+        function startFreeTrial() {
+            alert('🎉 Teste gratuito iniciado!\n\nUse a chave: TRIL-2024-TEST-DEMO\n\nVálida por 7 dias com todas as funcionalidades.');
+            
+            // Redirecionar para o sistema
+            window.open('index.html', '_blank');
+        }
+        
+        function copyKey(element) {
+            const key = element.textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                const originalText = element.textContent;
+                element.textContent = '✅ Copiado!';
+                element.style.background = '#d4edda';
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.style.background = '#f8f9fa';
+                }, 2000);
+            });
+        }
+        
+        function toggleFaq(button) {
+            const answer = button.nextElementSibling;
+            const icon = button.querySelector('span');
+            
+            if (answer.classList.contains('active')) {
+                answer.classList.remove('active');
+                icon.textContent = '+';
+            } else {
+                // Fechar outras FAQs abertas
+                document.querySelectorAll('.faq-answer.active').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelectorAll('.faq-question span').forEach(span => {
+                    span.textContent = '+';
+                });
+                
+                // Abrir esta FAQ
+                answer.classList.add('active');
+                icon.textContent = '−';
+            }
+        }
+        
+        // Animações ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('💰 Página de Preços Carregada');
+            console.log('🔑 Chaves de teste disponíveis:');
+            console.log('- TRIL-2024-TEST-DEMO (Teste 7 dias)');
+            console.log('- BASI-2024-DEMO-KEY1 (Básico 30 dias)');
+            console.log('- PREM-2024-FULL-DEMO (Premium completo)');
+            console.log('- ENTP-2024-CORP-TEST (Empresarial completo)');
+        });
+    </script>
+</body>
+</html>

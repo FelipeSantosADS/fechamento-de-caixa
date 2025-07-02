@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posto de Gasolina - Sistema de Caixa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .loading-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .fuel-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .loading-content h1 {
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .loading-content p {
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            border-radius: 3px;
+            animation: loading 2s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        #main-content {
+            display: none;
+            min-height: 100vh;
+            background: #f8fafc;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .status {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1f2937;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .success {
+            color: #059669;
+            background: #d1fae5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="loading" class="loading-screen">
+            <div class="loading-content">
+                <div class="fuel-icon">⛽</div>
+                <h1>Posto de Gasolina</h1>
+                <p>Carregando Sistema de Caixa...</p>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="main-content">
+            <div class="header">
+                <h1>🏪 Sistema de Fechamento de Caixa</h1>
+                <p>Posto de Gasolina - Versão Desktop</p>
+            </div>
+
+            <div class="card">
+                <h2>✅ Sistema Funcionando!</h2>
+                <p>O Electron está rodando corretamente.</p>
+                
+                <div id="system-info">
+                    <h3>Informações do Sistema:</h3>
+                    <div id="info-content">Carregando...</div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn" onclick="testSave()">💾 Testar Salvamento</button>
+                    <button class="btn btn-secondary" onclick="testLoad()">📂 Testar Carregamento</button>
+                    <button class="btn btn-secondary" onclick="openDataFolder()">📁 Abrir Pasta de Dados</button>
+                </div>
+
+                <div id="messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status" id="status">
+        Sistema inicializando...
+    </div>
+
+    <script>
+        console.log("Script iniciado")
+
+        // Variáveis globais
+        let systemInfo = null
+
+        // Função para mostrar mensagens
+        function showMessage(message, type = 'success') {
+            const messagesDiv = document.getElementById('messages')
+            const messageEl = document.createElement('div')
+            messageEl.className = type
+            messageEl.textContent = message
+            messagesDiv.appendChild(messageEl)
+            
+            setTimeout(() => {
+                messageEl.remove()
+            }, 5000)
+        }
+
+        // Função para atualizar status
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message
+        }
+
+        // Inicialização
+        async function init() {
+            try {
+                console.log("Iniciando aplicação...")
+                updateStatus("Carregando informações do sistema...")
+
+                // Verificar se electronAPI está disponível
+                if (typeof window.electronAPI === 'undefined') {
+                    throw new Error('electronAPI não está disponível')
+                }
+
+                // Carregar informações do sistema
+                systemInfo = await window.electronAPI.getSystemInfo()
+                console.log("Informações do sistema:", systemInfo)
+
+                // Atualizar interface
+                document.getElementById('info-content').innerHTML = `
+                    <p><strong>Versão:</strong> ${systemInfo.version}</p>
+                    <p><strong>Electron:</strong> ${systemInfo.electronVersion}</p>
+                    <p><strong>Plataforma:</strong> ${systemInfo.platform}</p>
+                    <p><strong>Pasta de Dados:</strong> ${systemInfo.dataFolder}</p>
+                `
+
+                // Simular carregamento
+                await new Promise(resolve => setTimeout(resolve, 2000))
+
+                // Mostrar conteúdo principal
+                document.getElementById('loading').style.display = 'none'
+                document.getElementById('main-content').style.display = 'block'
+
+                updateStatus(`Sistema carregado - Dados em: ${systemInfo.dataFolder}`)
+                showMessage("Sistema inicializado com sucesso!")
+
+            } catch (error) {
+                console.error("Erro na inicialização:", error)
+                updateStatus("Erro na inicialização")
+                showMessage(`Erro: ${error.message}`, 'error')
+            }
+        }
+
+        // Testar salvamento
+        async function testSave() {
+            try {
+                updateStatus("Testando salvamento...")
+                
+                const testData = {
+                    timestamp: new Date().toISOString(),
+                    test: "Dados de teste",
+                    number: Math.random()
+                }
+
+                const result = await window.electronAPI.saveData('test', testData)
+                
+                if (result.success) {
+                    showMessage("Dados salvos com sucesso!")
+                    updateStatus("Salvamento realizado")
+                } else {
+                    throw new Error(result.error)
+                }
+            } catch (error) {
+                console.error("Erro ao salvar:", error)
+                showMessage(`Erro ao salvar: ${error.message}`, 'error')
+                updateStatus("Erro no salvamento")
+            }
+        }
+
+        // Testar carregamento
+        async function testLoad() {
+            try {
+                updateStatus("Testando carregamento...")
+                
+                const result = await window.electronAPI.loadData('test')
+                
+                if (result.success) {
+                    if (result.data) {
+                        showMessage(`Dados carregados: ${JSON.stringify(result.data, null, 2)}`)
+                        updateStatus("Carregamento realizado")
+                    } else {
+                        showMessage("Nenhum dado encontrado (arquivo não existe)")
+                        updateStatus("Arquivo não encontrado")
+                    }
+                } else {
+                    throw new Error(result.error)
+                }
+            } catch (error) {
+                console.error("Erro ao carregar:", error)
+                showMessage(`Erro ao carregar: ${error.message}`, 'error')
+                updateStatus("Erro no carregamento")
+            }
+        }
+
+        // Abrir pasta de dados
+        async function openDataFolder() {
+            try {
+                updateStatus("Abrindo pasta de dados...")
+                await window.electronAPI.openDataFolder()
+                showMessage("Pasta de dados aberta!")
+                updateStatus("Pasta aberta")
+            } catch (error) {
+                console.error("Erro ao abrir pasta:", error)
+                showMessage(`Erro ao abrir pasta: ${error.message}`, 'error')
+                updateStatus("Erro ao abrir pasta")
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM carregado, iniciando aplicação...")
+            init()
+        })
+
+        console.log("Script configurado")
+    </script>
+</body>
+</html>

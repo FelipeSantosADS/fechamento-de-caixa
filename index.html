@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posto de Gasolina - Sistema de Caixa Online</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading" class="loading-screen">
+            <div class="loading-content">
+                <div class="fuel-icon">⛽</div>
+                <h1>Posto de Gasolina</h1>
+                <p>Carregando Sistema de Caixa Online...</p>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p class="loading-subtitle">Versão Web - Dados salvos no navegador</p>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="main-content" style="display: none;">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="install-banner" class="install-banner" style="display: none;">
+        <div class="install-content">
+            <span>📱 Instalar como App</span>
+            <button id="install-btn" class="btn-install">Instalar</button>
+            <button id="dismiss-btn" class="btn-dismiss">×</button>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="status-bar">
+        <span id="status-text">Sistema inicializando...</span>
+        <span id="online-status">🟢 Online</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/pwa.js"></script>
+</body>
+</html>

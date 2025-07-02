@@ -1,0 +1,6 @@
+@echo off
+echo Instalando dependencias...
+npm install
+
+echo Iniciando em modo desenvolvimento...
+npm run dev
